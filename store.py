@@ -5,7 +5,7 @@ import pymysql
 
 connection = pymysql.connect(host='localhost',
                              user='root',
-                             password='root',
+                             password='1q2w3e4r',
                              db='store2',
                              cursorclass=pymysql.cursors.DictCursor)
 
@@ -36,34 +36,47 @@ def images(filename):
 
 
 @post("/category")
-def create_category(name):
-    # try:
-    with connection.cursor() as cursor:
-        sql = """INSERT INTO categories(name) VALUES (name); 
-                 SELECT id  FROM categories WHERE name = '{}'""".format(name)
-        cursor.execute(sql)
-        result = cursor.lastrowid
-        return json.dumps({"STATUS": "SUCCESS - The category was created successfully","id": result, "CODE": "201 - category created successfully"})
-    # except :
-    #     return json.dumps({"STATUS": "ERROR - The category was not created due to an error", "MSG": "Category already exists","CODE": "200 - category already exists"})
-    # # elif code = 400:
-    #     return json.dumps({"STATUS": "ERROR - The category was not created due to an error","MSG": "Name parameter is missing","CODE": "400 - Bad request"})
-    # # elif code = 500:
-    #     return json.dumps({"STATUS": "ERROR - The category was not created due to an error","MSG": "Internal error","CODE": "500 - Internal error"})
+def create_category():
+    name = request.POST.get('name')
+    if not name:
+        return json.dumps({"STATUS": "ERROR", "MSG": "Name parameter is missing", "CODE": "400 - Bad request"})
+    else:
+        try:
+            with connection.cursor() as cursor:
+                sql = "select name from categories where name = '{}'".format(name)
+                cursor.execute(sql)
+                result = cursor.fetchone()
+                if result == None:
+                    sql = "INSERT INTO categories(name) VALUES ('{}'); ".format(name)
+                    cursor.execute(sql)
+                    connection.commit()
+                    result = cursor.lastrowid
+                    return json.dumps({"STATUS": "SUCCESS", "id": result, "CODE": "201 - category created successfully"})
+                else:
+                    return json.dumps({"STATUS": "ERROR", "MSG": "Category already exists","CODE": "200 - category already exists"})
+        except Exception as e:
+            return json.dumps({"STATUS": "ERROR", "MSG": "Internal error", "CODE": "500 - Internal error"})
 
 
-# @delete("/category/<id>")
-# def delete_category(id):
-#     try:
-#         return json.dumps({"STATUS": "SUCCESS - The category was deleted successfully","CODE": "201 - Category deleted successfully"})
-#     except:
-#     # elif code = 404:
-#
-#         return json.dumps({"STATUS": "ERROR - The category was not deleted due to an error","MSG": "Category not found","CODE": "404 - Category not found"})
-#     # elif code = 500:
-#         return json.dumps({"STATUS": "ERROR - The category was not deleted due to an error","MSG": "Internal error","CODE": "500 - Internal error"})
-#
-#
+@delete("/category/<id>")
+def delete_category(id):
+    try:
+        with connection.cursor() as cursor:
+            sql = "select id from categories where id = '{}'".format(id)
+            cursor.execute(sql)
+            result = cursor.fetchone()
+            if result == None:
+                return json.dumps({"STATUS": "ERROR", "MSG": "Category not found", "CODE": "404 - Category not found"})
+            else:
+                sql = """DELETE FROM categories
+                         WHERE id = '{}'""".format(id)
+                cursor.execute(sql)
+                connection.commit()
+                return json.dumps({"STATUS": "SUCCESS", "CODE": "201 - Category deleted successfully"})
+    except Exception as e:
+        return json.dumps({"STATUS": "ERROR", "MSG": "Internal error", "CODE": "500 - Internal error"})
+
+
 @get("/categories")
 def list_of_categories():
     try:
@@ -71,10 +84,11 @@ def list_of_categories():
             sql = "select * from categories;"
             cursor.execute(sql)
             result = cursor.fetchall()
-        return json.dumps({"STATUS": "SUCCESS - Categories fetched", "CATEGORIES": result,"CODE": "200 - Success"})
-    except:
-        return json.dumps({"STATUS": "ERROR - Internal error","MSG": "Internal error","CODE": "500 - Internal error"})
-#
+        return json.dumps({"STATUS": "SUCCESS - Categories fetched", "CATEGORIES": result, "CODE": "200 - Success"})
+    except Exception as e:
+        return json.dumps({"STATUS": "ERROR - Internal error", "MSG": "Internal error", "CODE": "500 - Internal error"})
+
+
 # @post("/product")
 # def add_and_edit_product(products{}):
 #     try:
@@ -117,9 +131,9 @@ def list_of_products():
             sql = "select * from products;"
             cursor.execute(sql)
             result = cursor.fetchall()
-        return json.dumps({"STATUS": "SUCCESS - Products fetched", "PRODUCTS": result,"CODE": "200 - Success"})
+        return json.dumps({"STATUS": "SUCCESS - Products fetched", "PRODUCTS": result, "CODE": "200 - Success"})
     except:
-        return json.dumps({"STATUS": "ERROR - Internal error","MSG": "Internal error","CODE": "500 - Internal error"})
+        return json.dumps({"STATUS": "ERROR - Internal error", "MSG": "Internal error", "CODE": "500 - Internal error"})
 
 
 @get("/category/<id>/products")
@@ -129,7 +143,7 @@ def list_of_products_by_categories(id):
             sql = "select * from products where category = '{}'".format(id)
             cursor.execute(sql)
             result = cursor.fetchall()
-        return json.dumps({"STATUS": "SUCCESS - Products fetched", "PRODUCTS": result,"CODE": "200 - Success"})
+        return json.dumps({"STATUS": "SUCCESS - Products fetched", "PRODUCTS": result, "CODE": "200 - Success"})
     except:
         return json.dumps({"STATUS": "ERROR - Internal error", "MSG": "Internal error", "CODE": "500 - Internal error"})
 #
@@ -137,7 +151,7 @@ def list_of_products_by_categories(id):
 
 
 def main():
-    run(host='localhost', port=7006)
+    run(host='localhost', port=7010)
 
 
 if __name__ == '__main__':
