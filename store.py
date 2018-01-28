@@ -6,7 +6,7 @@ import pymysql
 connection = pymysql.connect(host='localhost',
                              user='root',
                              password='1q2w3e4r',
-                             db='store2',
+                             db='store',
                              cursorclass=pymysql.cursors.DictCursor)
 
 
@@ -36,14 +36,14 @@ def images(filename):
 
 
 @post("/category")
-def create_category():
-    name = request.POST.get('name')
+def create_category(name):
+    name = request.forms.get('name')
     if not name:
         return json.dumps({"STATUS": "ERROR", "MSG": "Name parameter is missing", "CODE": "400 - Bad request"})
     else:
         try:
             with connection.cursor() as cursor:
-                sql = "select name from categories where name = '{}'".format(name)
+                sql = "SELECT name FROM categories WHERE name = '{}'".format(name)
                 cursor.execute(sql)
                 result = cursor.fetchone()
                 if result == None:
@@ -62,7 +62,7 @@ def create_category():
 def delete_category(id):
     try:
         with connection.cursor() as cursor:
-            sql = "select id from categories where id = '{}'".format(id)
+            sql = "SELECT id FROM categories WHERE id = '{}'".format(id)
             cursor.execute(sql)
             result = cursor.fetchone()
             if result == None:
@@ -81,7 +81,7 @@ def delete_category(id):
 def list_of_categories():
     try:
         with connection.cursor() as cursor:
-            sql = "select * from categories;"
+            sql = "SELECT * FROM categories;"
             cursor.execute(sql)
             result = cursor.fetchall()
         return json.dumps({"STATUS": "SUCCESS", "CATEGORIES": result, "CODE": "200 - Success"})
@@ -90,23 +90,59 @@ def list_of_categories():
 
 
 @post("/product")
-def add_and_edit_product(products{}):
+def add_or_edit_product():
+    id = request.forms.get('id')
+    title = request.forms.get('title')
+    description = request.forms.get('desc')
+    price = request.forms.get('price')
+    img_url = request.forms.get('img_url')
+    category = request.forms.get('category')
+    favorite = request.forms.get('favorite')
+    if favorite == None:
+        favorite = 0
+    else:
+        favorite = 1
+  #  print "id "+str(id)+" title "+str(title)+" desc "+str(description)+" price "+str(price)+" img_url "+str(img_url)+ " cat "+str(category) + " fav "+ str(favorite)
+    if title == None or description == None or price == None or img_url == None or category == None:
+        return json.dumps({"STATUS": "ERROR", "MSG": "Missing parameters", "CODE": "400 - Bad request"})
     try:
-        return json.dumps({"STATUS": "SUCCESS", "PRODUCT_ID":,"CODE": "201 - Product created/updated  successfully"})
-    except:
-    #elif code = 400
-        return json.dumps({"STATUS": "ERROR", "MSG": "Missing parameters","CODE": "400 - Bad request"})
-    # elif code = 404:
-        return json.dumps({"STATUS": "ERROR", "MSG": "Category not found","CODE": "404 - Category not found"})
-    # elif code = 500:
-        return json.dumps({"STATUS": "ERROR", "MSG": "Internal error","CODE": "500 - Internal error"})
+        with connection.cursor() as cursor:
+            sql = "SELECT id FROM categories WHERE id = '{}';".format(category)
+            cursor.execute(sql)
+            result = cursor.fetchone()
+            print "result cat "+str(result)
+            if result == None:
+                print "second if"
+                return json.dumps({"STATUS": "ERROR", "MSG": "Category not found", "CODE": "404 - Category not found"})
+            else:
+                print "else"
+                if id == "":
+                    print "second if"
+                    sql = """INSERT INTO products (title,description,price,img_url,category,favorite) VALUES
+                     ('{0}','{1}',{2},'{3}',{4},{5})""".format(title, description, price, img_url, category, favorite)
+                    cursor.execute(sql)
+                    connection.commit()
+                    result = cursor.lastrowid
+                    print "new id " + str(result)
+                    return json.dumps({"STATUS": "SUCCESS", "PRODUCT_ID": str(result), "CODE": "201 - Product created successfully"})
+                else:
+                    print "inner else"
+                    print "id " + str(id) + " title " + str(title) + " desc " + str(description) + " price " + str(price) + " img_url " + str(img_url) + " cat " + str(category) + " fav " + str(favorite)
+                    sql = """UPDATE products SET title = '{0}', description = '{1}', price = {2}, img_url = '{3}', category = {4}, favorite = {5}
+                            WHERE id = {6}""".format(title, description, price, img_url, category, favorite, id)
+                    cursor.execute(sql)
+                    connection.commit()
+                    return json.dumps({"STATUS": "SUCCESS", "PRODUCT_ID": id, "CODE": "201 - Product updated successfully"})
+    except Exception as e:
+        print "e " + str(e)
+        return json.dumps({"STATUS": "ERROR", "MSG": "Internal error", "CODE": "500 - Internal error"})
 
 
 @get("/product/<id>")
 def get_product(id):
     try:
         with connection.cursor() as cursor:
-            sql = "select id from products where id = '{}'".format(id)
+            sql = "SELECT id FROM products WHERE id = '{}'".format(id)
             cursor.execute(sql)
             result = cursor.fetchone()
             if result == None:
@@ -124,9 +160,10 @@ def get_product(id):
 
 @delete("/product/<id>")
 def delete_product(id):
+    print "deleting"
     try:
         with connection.cursor() as cursor:
-            sql = "select id from products where id = '{}'".format(id)
+            sql = "SELECT id FROM products WHERE id = '{}'".format(id)
             cursor.execute(sql)
             result = cursor.fetchone()
             if result == None:
@@ -145,11 +182,13 @@ def delete_product(id):
 def list_of_products():
     try:
         with connection.cursor() as cursor:
-            sql = "select * from products;"
+            sql = "SELECT * FROM products;"
             cursor.execute(sql)
             result = cursor.fetchall()
+            for item in result:
+                item['creation_time'] = ""
         return json.dumps({"STATUS": "SUCCESS", "PRODUCTS": result, "CODE": "200 - Success"})
-    except:
+    except Exception as e:
         return json.dumps({"STATUS": "ERROR", "MSG": "Internal error", "CODE": "500 - Internal error"})
 
 
@@ -157,11 +196,13 @@ def list_of_products():
 def list_of_products_by_categories(id):
     try:
         with connection.cursor() as cursor:
-            sql = "select * from products where category = '{}'".format(id)
+            sql = "SELECT * FROM products WHERE category = '{}' ORDER BY favorite DESC, creation_time ASC".format(id)
             cursor.execute(sql)
             result = cursor.fetchall()
+            for item in result:
+                item['creation_time'] = ""
         return json.dumps({"STATUS": "SUCCESS", "PRODUCTS": result, "CODE": "200 - Success"})
-    except:
+    except Exception as e:
         return json.dumps({"STATUS": "ERROR", "MSG": "Internal error", "CODE": "500 - Internal error"})
 
 

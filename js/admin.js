@@ -6,6 +6,7 @@ StoreAdmin.start = function(){
 		StoreAdmin.loadCategories();
 		StoreAdmin.loadProducts();
 		StoreAdmin.bineForms();
+		StoreAdmin.setting();
 		$("#welcome-page").fadeIn();
 	});
 };
@@ -122,7 +123,7 @@ StoreAdmin.clearProductForm = function() {
 		$(this).val("");
 	});
 	addProductForm.find("input[name='favorite']").prop('checked' , false);
-	addProductForm.find("textarea[name='desc']").text("");
+	addProductForm.find("textarea[name='desc']").val("");
 	addProductForm.find("input[type='submit']").val("Add Product");
 	addProductForm.find("#delete-product").hide();
 };
@@ -216,5 +217,11 @@ StoreAdmin.deleteProduct = function(deleteBtn, pid){
 		}
 	});
 };
+
+
+StoreAdmin.setting = function(){
+
+}
+
 
 StoreAdmin.start();
