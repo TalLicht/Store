@@ -128,9 +128,10 @@ def add_or_edit_product():
                 else:
                     print "inner else"
                     print "id " + str(id) + " title " + str(title) + " desc " + str(description) + " price " + str(price) + " img_url " + str(img_url) + " cat " + str(category) + " fav " + str(favorite)
-                    sql = """UPDATE products SET title = '{0}', description = '{1}', price = {2}, img_url = '{3}', category = {4}, favorite = {5}
-                            WHERE id = {6}""".format(title, description, price, img_url, category, favorite, id)
-                    cursor.execute(sql)
+                    # sql = """UPDATE products SET title = '{0}', description = '{1}', price = {2}, img_url = '{3}', category = {4}, favorite = {5}
+                    #         WHERE id = {6}""".format(title, description, price, img_url, category, favorite, id)
+                    sql = """UPDATE products SET title='{0}',description='{1}',price={2},img_url='{3}',category={4},favorite = {5} WHERE id = {6}""".format(title, description, price, img_url, category, favorite, id)
+                    x = cursor.execute(sql)
                     connection.commit()
                     return json.dumps({"STATUS": "SUCCESS", "PRODUCT_ID": id, "CODE": "201 - Product updated successfully"})
     except Exception as e:
