@@ -149,12 +149,7 @@ def get_product(id):
             if result == None:
                 return json.dumps({"STATUS": "ERROR", "MSG": "Product not found", "CODE": "404 - Product not found"})
             else:
-                sql = """DELETE FROM products
-                            WHERE id = '{}'""".format(id)
-                cursor.execute(sql)
-                connection.commit()
-                return json.dumps(
-                    {"STATUS": "SUCCESS", "PRODUCT": result, "CODE": "200 - Product fetched successfully"})
+                return json.dumps({"STATUS": "SUCCESS", "PRODUCT": result, "CODE": "200 - Product fetched successfully"})
     except Exception as e:
         return json.dumps({"STATUS": "ERROR", "MSG": "Internal error", "CODE": "500 - Internal error"})
 
