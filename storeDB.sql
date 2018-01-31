@@ -2,7 +2,7 @@ create database store;
 use store;
 
 
-drop table categories;
+drop table if exists categories;
 create table categories(
 id int  auto_increment primary key,
 name text
@@ -13,7 +13,7 @@ insert into categories values
 (2,"Fruits"),
 (3,"Dairy");
 
-drop table products;
+drop table if exists products;
 create table products(
 id int auto_increment primary key,
 title text not Null,
