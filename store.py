@@ -36,7 +36,7 @@ def images(filename):
 
 
 @post("/category")
-def create_category(name):
+def create_category():
     name = request.forms.get('name')
     if not name:
         return json.dumps({"STATUS": "ERROR", "MSG": "Name parameter is missing", "CODE": "400 - Bad request"})
